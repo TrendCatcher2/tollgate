@@ -128,8 +128,16 @@ let convo = null;
 async function api(path, body) {
   const res = await fetch(path, body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  if (!res.ok) throw Object.assign(new Error(data.error || `HTTP ${res.status}`), { status: res.status });
   return data;
+}
+
+// The server keeps conversations in memory, so a restart or a sleeping free host forgets them; start over instead of failing.
+async function restartIfLost(err) {
+  if (err.status !== 404 || !/conversation not found/.test(err.message)) return false;
+  await start();
+  say('note', 'The demo server restarted since this page loaded (the free host sleeps when idle), so this is a fresh conversation with new payments. Pick the message again and send it.');
+  return true;
 }
 
 function say(kind, text) {
@@ -243,7 +251,9 @@ async function decide(approvalId, action) {
     const last = view.events[view.events.length - 1];
     say('note', `Staff ${action === 'approve' ? 'approved' : 'rejected'} ${last.tool}: ${last.outcome}${last.error ? ' (' + last.error + ')' : ''}`);
     render(view);
-  } catch (err) { say('note', err.message); }
+  } catch (err) {
+    if (!(await restartIfLost(err).catch(() => false))) say('note', err.message);
+  }
 }
 
 $('form').onsubmit = async (ev) => {
@@ -258,7 +268,7 @@ $('form').onsubmit = async (ev) => {
     say('agent', reply || '(no reply)');
     render(view);
   } catch (err) {
-    say('note', err.message);
+    if (!(await restartIfLost(err).catch(() => false))) say('note', err.message);
   } finally {
     $('send').disabled = false;
     $('input').focus();

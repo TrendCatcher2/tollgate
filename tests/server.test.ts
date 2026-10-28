@@ -68,3 +68,24 @@ describe('demo server', () => {
     expect((await post(`/api/conversations/${convo.id}/messages`, { message: 'x'.repeat(2_001) })).status).toBe(400);
   });
 });
+
+describe('per-visitor limit behind a proxy', () => {
+  const limited = createDemoServer(convos, { perVisitor: 2, windowMs: 60_000, perDay: 0, disabled: false, clientIpHeader: 'cf-connecting-ip' }, 'public/index.html');
+  let url = '';
+  beforeAll(async () => {
+    await new Promise<void>((resolve) => limited.listen(0, resolve));
+    url = `http://127.0.0.1:${(limited.address() as AddressInfo).port}/api/conversations`;
+  });
+  afterAll(() => new Promise<void>((resolve) => limited.close(() => resolve())));
+
+  const start = async (headers: Record<string, string>) =>
+    (await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{"agent":"hijacked"}' })).status;
+
+  it('counts visitors by the trusted header, whatever X-Forwarded-For says', async () => {
+    const amina = { 'cf-connecting-ip': '198.51.100.1' };
+    expect(await start({ ...amina, 'x-forwarded-for': '10.0.0.1' })).toBe(200);
+    expect(await start({ ...amina, 'x-forwarded-for': '10.0.0.2' })).toBe(200);
+    expect(await start({ ...amina, 'x-forwarded-for': '203.0.113.9' })).toBe(429);
+    expect(await start({ 'cf-connecting-ip': '198.51.100.2' })).toBe(200);
+  });
+});

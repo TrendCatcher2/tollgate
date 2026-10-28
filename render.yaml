@@ -17,6 +17,9 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      # Render sits behind Cloudflare, which sets this to the visitor's address; X-Forwarded-For can't tell visitors apart there.
+      - key: CLIENT_IP_HEADER
+        value: cf-connecting-ip
       - key: DEMO_TURNS_PER_VISITOR
         value: "20"
       - key: DEMO_TURNS_PER_DAY

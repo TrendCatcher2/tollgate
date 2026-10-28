@@ -9,6 +9,8 @@ export interface Limits {
   /** Chat turns the whole server may send per day, to stay inside the free model quota. */
   perDay: number;
   disabled: boolean;
+  /** Header the host's proxy sets to the client's address (e.g. cf-connecting-ip); without it, the socket address. */
+  clientIpHeader?: string;
 }
 
 const MAX_BODY = 8 * 1024;
@@ -45,7 +47,7 @@ export function createDemoServer(convos: Conversations, limits: Limits, pagePath
       if (req.method === 'POST' && url.pathname === '/api/conversations') {
         const body = await readJson(req);
         // A live conversation creates sandbox payments, so it counts toward the visitor's limit.
-        takeTurn(visitorOf(req), false);
+        takeTurn(visitorOf(req, limits.clientIpHeader), false);
         return json(res, 200, convos.view(await convos.create(body.guarded !== false, body.agent === 'hijacked' ? 'hijacked' : 'ai')));
       }
       const match = url.pathname.match(/^\/api\/conversations\/([0-9a-f-]{36})(?:\/(messages|approvals\/([0-9a-f-]{36})\/(approve|reject)))?$/);
@@ -58,7 +60,7 @@ export function createDemoServer(convos: Conversations, limits: Limits, pagePath
             throw new HttpError(400, `message must be 1-${MAX_MESSAGE} characters`);
           }
           // Only real model turns spend the model quota; the per-visitor limit applies to both.
-          takeTurn(visitorOf(req), convo.agent === 'ai');
+          takeTurn(visitorOf(req, limits.clientIpHeader), convo.agent === 'ai');
           const reply = await convos.send(convo, message.trim());
           return json(res, 200, { reply, view: convos.view(convo) });
         }
@@ -77,11 +79,11 @@ export function createDemoServer(convos: Conversations, limits: Limits, pagePath
   });
 }
 
-function visitorOf(req: IncomingMessage): string {
-  // Behind a hosting proxy, the last X-Forwarded-For entry is the one the proxy added; earlier ones are client-supplied.
-  const forwarded = req.headers['x-forwarded-for'];
-  const header = Array.isArray(forwarded) ? forwarded.at(-1) : forwarded;
-  return header?.split(',').at(-1)?.trim() || req.socket.remoteAddress || 'unknown';
+function visitorOf(req: IncomingMessage, clientIpHeader?: string): string {
+  // Only a header the proxy overwrites is trusted: X-Forwarded-For keeps whatever the client sent, and Render appends a different internal hop per request.
+  const value = clientIpHeader ? req.headers[clientIpHeader.toLowerCase()] : undefined;
+  const header = Array.isArray(value) ? value[0] : value;
+  return header?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
 }
 
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {

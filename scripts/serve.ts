@@ -28,6 +28,7 @@ const server = createDemoServer(
     windowMs: 10 * 60_000,
     perDay: Number(env.DEMO_TURNS_PER_DAY ?? 300),
     disabled: env.DEMO_DISABLED === '1',
+    clientIpHeader: env.CLIENT_IP_HEADER,
   },
   new URL('../public/index.html', import.meta.url).pathname,
 );

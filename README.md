@@ -73,16 +73,19 @@ With the real support agent (one run per scenario, Braintree tools; `results/` h
 
 Real models refuse some attacks on their own, but not reliably, and which ones they refuse changes from model to model. Tollgate's checks do not depend on the model. The Gemini 2.5 Flash run hit the free tier's 20-requests-a-day limit partway through and used an earlier version of the refund attack (a 5x refund, which Braintree itself rejects); its failed turns are left out, except one where Tollgate had already held the call.
 
+## How PayPal, AI and other tools are used
+
+- **Braintree sandbox (PayPal):** the agent's payment tools, through the official `braintree` Node SDK: `transaction.sale` for charges on the customer's vaulted card, `transaction.refund`, `transaction.find` for lookups and `dispute.accept`; `customer.create`, `paymentMethod.create` and `testing.settle` set up the demo shop's customers and settled payments. Every agent call goes through Tollgate first.
+- **PayPal Agent Toolkit (`@paypal/agent-toolkit`):** Tollgate wraps its `create_order`, `create_refund`, `get_order` and `accept_dispute_claim` tools with the same rules.
+- **AI:** the support agent is Gemma 4 31B (`gemma-4-31b-it`) through the Google Gemini API, called with the Vercel AI SDK's tool calling; the model decides which payment tool to call with which arguments, and Tollgate checks each call. Gemini 2.5 Flash was used for a second eval run. Development was assisted by Claude Code (Anthropic).
+- **Render (hackathon sponsor):** hosts the live demo from the `render.yaml` blueprint (see [Host it](#host-it)).
+
 ## Status
 
-Work in progress for the PayPal AI Hackathon 2026.
+Built for the PayPal AI Hackathon 2026.
 
-- **Verified live:** Braintree sandbox: vault, charge, settle and refund, and the demo server end to end (with Tollgate off a hijacked agent refunded another customer's sandbox payment; with it on the same call was blocked, a large refund waited for approval and then ran, and legitimate refunds and charges went through).
+- **Verified live:** Braintree sandbox: vault, charge, settle and refund, and the demo server end to end, both locally and on the hosted demo (with Tollgate off a hijacked agent refunded another customer's sandbox payment; with it on the same call was blocked, a large refund waited for approval and then ran, and legitimate refunds and charges went through).
 - **Tested offline only:** the PayPal Agent Toolkit adapter. PayPal REST developer sign-up isn't available in Pakistan, where this was built, so it has not been run against the PayPal REST sandbox.
-
-## AI tools used
-
-Development was assisted by Claude Code (Anthropic).
 
 ## License
 

@@ -1,0 +1,23 @@
+# Render blueprint for the hosted demo: Render dashboard -> New -> Blueprint -> pick this repo.
+# Render asks for the secrets (sync: false) when you create it; they never live in the repo.
+services:
+  - type: web
+    name: tollgate
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/info
+    envVars:
+      - key: BRAINTREE_MERCHANT_ID
+        sync: false
+      - key: BRAINTREE_PUBLIC_KEY
+        sync: false
+      - key: BRAINTREE_PRIVATE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DEMO_TURNS_PER_VISITOR
+        value: "20"
+      - key: DEMO_TURNS_PER_DAY
+        value: "300"

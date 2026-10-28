@@ -29,7 +29,7 @@ npm install
 cp .env.example .env      # Braintree sandbox keys (Settings -> API) and GEMINI_API_KEY
 npm test                  # policy, guard, Braintree and eval tests (no network)
 npm run smoke:braintree   # vault a test card, charge, settle and refund in your sandbox
-npm run seed:braintree    # create the demo shop's customers and settled payments in your sandbox
+npm run seed:braintree    # optional: create the demo shop's customers and settled payments now
 npm start                 # demo on http://localhost:8787
 ```
 
@@ -37,9 +37,13 @@ In the demo you chat as the signed-in customer Amina. The buttons above the mess
 
 The agent menu picks the real AI agent (Gemma 4 through the Gemini API by default; set `GEMINI_MODEL` to change it) or a **fully hijacked** agent that uses no model and makes exactly the call each attack asks for. The hijacked agent shows the worst case and keeps working when the free model quota runs out.
 
-Without `npm run seed:braintree` the demo runs against an offline Braintree stand-in. `?demo=other-customer-refund` (or any scenario id) pre-fills that attack; `?tollgate=off` starts unguarded and `?agent=hijacked` starts with the hijacked agent.
+Without Braintree keys the demo runs against an offline Braintree stand-in. With keys but no seeded ledger, the server vaults (or reuses) the two demo customers when it starts. `?demo=other-customer-refund` (or any scenario id) pre-fills that attack; `?tollgate=off` starts unguarded and `?agent=hijacked` starts with the hijacked agent.
 
 The PayPal Agent Toolkit adapter (`create_order`, `create_refund`, `get_order`, `accept_dispute_claim`) uses the same rules. `npm run smoke` checks it against the PayPal REST sandbox if you add `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET`.
+
+### Host it
+
+`render.yaml` is a [Render](https://render.com) blueprint for a free web service: in the Render dashboard pick **New -> Blueprint**, choose this repo and paste the three Braintree keys and `GEMINI_API_KEY` when asked. Turn off **Duplicate Transaction Checking** in the Braintree sandbox (Settings -> Processing), since every visitor charges the same two test cards. Each visitor gets 20 turns per 10 minutes and the AI agent 300 turns a day (`DEMO_TURNS_PER_VISITOR`, `DEMO_TURNS_PER_DAY`); `DEMO_DISABLED=1` pauses the demo. A free instance sleeps when idle, so the first visit takes about a minute and conversations from before a sleep are gone.
 
 ## Attack evaluation
 

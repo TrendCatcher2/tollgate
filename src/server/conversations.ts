@@ -128,7 +128,7 @@ export class Conversations {
     } catch (err) {
       console.error(err);
       const busy = /quota|rate|429|exhausted/i.test(String(err));
-      throw new HttpError(502, busy ? 'the AI model is rate limited right now; wait a minute and resend' : 'the AI model did not answer; resend your message');
+      throw new HttpError(502, busy ? 'the AI model is rate limited or out of free quota for today; wait a minute and resend, or switch to the fully hijacked agent' : 'the AI model did not answer; resend your message');
     }
     convo.messages = [...messages, ...turn.responseMessages];
     return turn.text;

@@ -23,12 +23,12 @@
     "@paypal/agent-toolkit": "1.11.0",
     "ai": "4.3.19",
     "braintree": "3.40.0",
+    "tsx": "4.23.15",
     "zod": "3.25.76"
   },
   "devDependencies": {
     "@types/braintree": "3.4.5",
     "@types/node": "24.19.2",
-    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
   }

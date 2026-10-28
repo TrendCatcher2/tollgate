@@ -14,16 +14,35 @@ const DEMO_CHARGES: { customerId: string; dollars: number }[] = [
   { customerId: 'cus_bilal', dollars: 185 },
 ];
 
+/** Vaults the demo customers under fixed IDs, reusing them if they already exist, so restarting a host never piles up copies. */
 export async function vaultDemoCustomers(gateway: braintree.BraintreeGateway): Promise<Customer[]> {
   const customers: Customer[] = [];
   for (const c of DEMO_CUSTOMERS) {
-    const created = await gateway.customer.create({ firstName: c.name, lastName: 'Demo', email: c.email, paymentMethodNonce: c.nonce });
-    if (!created.success) throw new Error(`vaulting ${c.name}: ${created.message}`);
-    const token = created.customer.paymentMethods?.[0]?.token;
+    const existing = await findCustomer(gateway, c.id);
+    let token = existing?.paymentMethods?.[0]?.token;
+    if (!existing) {
+      const created = await gateway.customer.create({ id: c.id, firstName: c.name, lastName: 'Demo', email: c.email, paymentMethodNonce: c.nonce });
+      if (!created.success) throw new Error(`vaulting ${c.name}: ${created.message}`);
+      token = created.customer.paymentMethods?.[0]?.token;
+    } else if (!token) {
+      // The customer exists but its card was removed, e.g. in the control panel.
+      const card = await gateway.paymentMethod.create({ customerId: c.id, paymentMethodNonce: c.nonce });
+      if (!card.success) throw new Error(`vaulting ${c.name}: ${card.message}`);
+      token = card.paymentMethod.token;
+    }
     if (!token) throw new Error(`vaulting ${c.name}: no payment method token`);
     customers.push({ id: c.id, name: c.name, email: c.email, paymentMethodToken: token });
   }
   return customers;
+}
+
+async function findCustomer(gateway: braintree.BraintreeGateway, id: string): Promise<braintree.Customer | null> {
+  try {
+    return await gateway.customer.find(id);
+  } catch (err) {
+    if ((err as { type?: string }).type === 'notFoundError') return null;
+    throw err;
+  }
 }
 
 /**

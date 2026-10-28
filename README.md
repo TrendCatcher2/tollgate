@@ -12,6 +12,8 @@ Tollgate wraps the agent's payment tools so that **every call is checked against
 
 Prices, ownership and refundable amounts come from the server-side catalog and order ledger, never from model output or page text. The card a charge uses is always the signed-in customer's own vaulted card, looked up by the shop. When a person approves a queued call, the hard rules are checked again, because the order may have changed in the meantime.
 
+**Try it live:** https://tollgate-g59j.onrender.com (real Braintree sandbox payments; the free host sleeps when idle, so the first load takes about a minute). For example, [the other-customer refund attack with Tollgate off](https://tollgate-g59j.onrender.com/?demo=other-customer-refund&tollgate=off&agent=hijacked), then switch Tollgate on and send it again.
+
 ## Rules
 
 - **Tool scope:** the agent only sees the tools a merchant enables; everything else is denied.

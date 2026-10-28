@@ -84,7 +84,7 @@ Real models refuse some attacks on their own, but not reliably, and which ones t
 
 Built for the PayPal AI Hackathon 2026.
 
-- **Verified live:** Braintree sandbox: vault, charge, settle and refund, and the demo server end to end, both locally and on the hosted demo (with Tollgate off a hijacked agent refunded another customer's sandbox payment; with it on the same call was blocked, a large refund waited for approval and then ran, and legitimate refunds and charges went through).
+- **Verified live:** Braintree sandbox: vault, charge, settle and refund, and the demo server end to end (with Tollgate off a hijacked agent refunded another customer's sandbox payment; with it on the same call was blocked, a large refund waited for approval and then ran, and legitimate refunds and charges went through). On the hosted demo: the unguarded refund, the same call blocked with Tollgate on, a live charge, and the per-visitor rate limit.
 - **Tested offline only:** the PayPal Agent Toolkit adapter. PayPal REST developer sign-up isn't available in Pakistan, where this was built, so it has not been run against the PayPal REST sandbox.
 
 ## License
